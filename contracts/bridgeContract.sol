@@ -214,13 +214,9 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     mapping(address => mapping(uint => uint)) public broadcastedNftsTimestamp;
     uint cooldownTimerBroadcast = 60;
 
-    constructor(
-        address _layerZeroContractAddress,
-        address _omniTicketContract,
-        address _endpoint
-    ) {
+    constructor(address _omniTicketContract, address _endpoint) {
         //@TODO unnecessary imho
-        layerZeroContractAddress = _layerZeroContractAddress;
+        layerZeroContractAddress = _endpoint;
         omniTicketContract = _omniTicketContract;
         endpoint = ILayerZeroEndpoint(_endpoint);
     }
@@ -236,7 +232,7 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     function lzReceive(
         uint16 _srcChainId,
         bytes calldata _srcAddress,
-        uint64 _nonce,
+        uint64,
         bytes calldata _payload
     ) external override {
         require(msg.sender == address(layerZeroContractAddress));
