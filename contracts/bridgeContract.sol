@@ -248,21 +248,31 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
         omniNftsSent[_srcChainId][ownerAddress] = true;
     }
 
-    function estimateFees(
+    // the other was too complicated
+    function checkFees(
         uint16 _dstChainId,
-        address _userApplication,
-        bytes calldata _payload,
-        bool _payInZRO,
-        bytes calldata _adapterParams
-    ) external view returns (uint256 nativeFee, uint256 zroFee) {
-        return
-            endpoint.estimateFees(
-                _dstChainId,
-                _userApplication,
-                _payload,
-                _payInZRO,
-                _adapterParams
-            );
+        bytes memory _destination
+    ) external view returns (uint) {
+        // Create an instance of the ERC721 contract
+
+        IERC721 omniTicket = IERC721(omniTicketContract);
+        // Check the balance of the msg.sender
+        uint256 balance = omniTicket.balanceOf(msg.sender);
+
+        bytes memory payload = abi.encode(msg.sender, 1);
+
+        uint16 version = 1;
+        bytes memory adapterParams = abi.encodePacked(version, gas);
+
+        (uint256 messageFee, ) = endpoint.estimateFees(
+            _dstChainId,
+            address(this),
+            payload,
+            false,
+            adapterParams
+        );
+
+        return messageFee;
     }
 
     function broadcastNFTOwnership(
