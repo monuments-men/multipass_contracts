@@ -205,7 +205,15 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     address public omniTicketContract;
     ILayerZeroEndpoint public endpoint;
 
+    bool putContractToDemo = false;
+
     uint256 gas = 450000;
+
+    //for instant verification demo
+    function changeToDemoStateOrBack(bool _newState) external onlyOwner {
+        putContractToDemo = _newState;
+    }
+
     event NFTOwnershipBroadcasted(address owner, uint tokenId, uint timestamp);
 
     mapping(uint16 => mapping(address => bool)) public omniNftsSent;
@@ -225,6 +233,9 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
         address _ownerToVerify,
         uint16 _srcChainId
     ) external view returns (bool) {
+        if (putContractToDemo) {
+            return true;
+        }
         return omniNftsSent[_srcChainId][_ownerToVerify];
     }
 
@@ -273,13 +284,18 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
 
     function broadcastNFTOwnership(
         uint16 _dstChainId,
-        bytes memory _destination
+        bytes calldata _destination
     ) external payable {
         // Create an instance of the ERC721 contract
 
         IERC721 omniTicket = IERC721(omniTicketContract);
         // Check the balance of the msg.sender
         uint256 balance = omniTicket.balanceOf(msg.sender);
+
+        bytes memory remoteAndLocalAddresses = abi.encodePacked(
+            _destination,
+            address(this)
+        );
 
         // If balance is more than 0, broadcast ownership
         if (balance > 0) {
@@ -308,7 +324,7 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
 
             endpoint.send{value: msg.value}(
                 _dstChainId,
-                _destination,
+                remoteAndLocalAddresses,
                 payload,
                 payable(msg.sender),
                 address(0x0),

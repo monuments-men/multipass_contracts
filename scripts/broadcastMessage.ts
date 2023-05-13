@@ -285,16 +285,11 @@ async function main() {
     }
   ];
 
-  const multiPassContract = new ethers.Contract(multiPassContractAddress, abi, walletFuji);
-
-  // Get your dstChainId and _destinationContract
-  const dstChainId = chainIdsEndpointsLayerZero[2].chainId;
-  let _destinationContract = ethers.utils.arrayify("0xB00b6e2135a76C8195F3BFC516e805a9fC59a143");
-
   let address = "0xB00b6e2135a76C8195F3BFC516e805a9fC59a143";
-  let bytes = ethers.utils.arrayify(address);
+  let bytes20 = ethers.utils.hexZeroPad(address, 20);
 
-  console.log(bytes);
+  console.log(bytes20);
+
   // Check the fees
   //let feeNeeded = await multiPassContract.checkFees(dstChainId, _destinationContract, { from: walletFuji.address });
 
