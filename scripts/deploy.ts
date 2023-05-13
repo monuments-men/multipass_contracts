@@ -7,13 +7,18 @@ async function main() {
 
   console.log(`Starting deployment V1`)
 
-  const gasLimit = ethers.utils.hexlify(9000000); // example limit
+
   const uri = "http://www.voodoofx.com/wp-content/uploads/2018/03/Multipass-LeeLoo.jpg";
   const chainIdsEndpointsLayerZero = [
     { chainName: "Arbitrum-Goerli", chainId: "10143", endpoint: "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab" },
     { chainName: "Optimism-Goerli", chainId: "10132", endpoint: "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1" },
     { chainName: "Mumbai", chainId: "10109", endpoint: "0xf69186dfBa60DdB133E91E9A4B5673624293d8F8" },
-    { chainName: "Sepolia", chainId: "10161", endpoint: "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1" }
+    { chainName: "Sepolia", chainId: "10161", endpoint: "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1" },
+    { chainName: "Fuji Testnet", chainId: "10106", endpoint: "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706" },
+    { chainName: "gnosis Testnet", chainId: "10145", endpoint: "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1" },
+    { chainName: "zkSync Testnet", chainId: "10165", endpoint: "0x093D2CF57f764f09C3c2Ac58a42A2601B8C79281" },
+
+
   ];
 
 
@@ -28,32 +33,14 @@ async function main() {
   // Create providers
   const providerMumbai = new ethers.providers.JsonRpcProvider(rpcMumbai);
   const providerSepolia = new ethers.providers.JsonRpcProvider(rpcSepolia);
+  const providerFuji = new ethers.providers.JsonRpcProvider(process.env.RPC_FUJI);
 
   // Create wallets
   const walletMumbai = new ethers.Wallet(privateKeyMumbai!, providerMumbai);
+
+  const walletFuji = new ethers.Wallet(privateKeyMumbai!, providerFuji);
   const walletSepolia = new ethers.Wallet(privateKeySepolia!, providerSepolia);
 
-
-
-  //first test on sepolia to mumbai
-
-  //@TODO this has to be deployed on MUMBAI
-
-  const MultiPassContract = await ethers.getContractFactory("MultiPassContract", walletMumbai);
-  const MultichainTicket = await ethers.getContractFactory("MultichainTicket", walletMumbai);
-
-
-  const multichainTicket = await MultichainTicket.deploy(uri);
-  await multichainTicket.deployed();
-
-  console.log("nft ticket deployed")
-  const multiPassContract = await MultiPassContract.deploy(multichainTicket.address, chainIdsEndpointsLayerZero[2].endpoint, { gasLimit: gasLimit });
-  await multiPassContract.deployed();
-
-
-  await multichainTicket.mint()
-
-  console.log(`Mumbai done`)
 
   //@TODO This has to be deployed on SEPOLIA
   const SMultiPassContract = await ethers.getContractFactory("MultiPassContract", walletSepolia);
@@ -63,22 +50,34 @@ async function main() {
   const SmultichainTicket = await SMultichainTicket.deploy(uri);
   await SmultichainTicket.deployed();
 
-  const SmultiPassContract = await SMultiPassContract.deploy(SmultichainTicket.address, chainIdsEndpointsLayerZero[3].endpoint, { gasLimit: gasLimit });
+  const SmultiPassContract = await SMultiPassContract.deploy(SmultichainTicket.address, chainIdsEndpointsLayerZero[3].endpoint);
   await SmultiPassContract.deployed();
 
 
   await SmultichainTicket.mint()
 
+  console.log(`Deployed Contracts to Chain:  ${chainIdsEndpointsLayerZero[3].chainName}`)
+  console.log(
+    `Deployed multiPassContract to ${SmultiPassContract.address}`
+  );
 
-  console.log(`Sepolia done`)
+  console.log(
+    `Deployed multichainTicket to ${SmultichainTicket.address}`
+  );
 
-  const dstChainId = chainIdsEndpointsLayerZero[2].chainId;
-  const _destinationContract = multiPassContract.address; // has to be already deployed on the other chain
+  //done with sepolia
 
-  let feeNeeded = await multiPassContract.checkFees(dstChainId, _destinationContract, { from: walletMumbai.address });
+  // we want to receive on mumbai. What do we do.
 
-  let broadcastedNftOwnership = await multiPassContract.broadcastNFTOwnership(dstChainId, _destinationContract, { value: feeNeeded, from: walletMumbai.address })
+  const MultiPassContract = await ethers.getContractFactory("MultiPassContract", walletMumbai);
+  const MultichainTicket = await ethers.getContractFactory("MultichainTicket", walletMumbai);
 
+
+  const multichainTicket = await SMultichainTicket.deploy(uri);
+  await multichainTicket.deployed();
+
+  const multiPassContract = await SMultiPassContract.deploy(SmultiPassContract.address, chainIdsEndpointsLayerZero[2].endpoint);
+  await multiPassContract.deployed();
 
 
 
@@ -92,19 +91,34 @@ async function main() {
     `Deployed multichainTicket to ${multichainTicket.address}`
   );
 
-  console.log(`Deployed Contracts to Chain:  ${chainIdsEndpointsLayerZero[3].chainName}`)
-  console.log(
-    `Deployed multiPassContract to ${SmultiPassContract.address}`
-  );
 
-  console.log(
-    `Deployed multichainTicket to ${SmultichainTicket.address}`
-  );
 
-  console.log(
+
+
+
+  //destination receiver
+
+  /*
+  const dstChainId = chainIdsEndpointsLayerZero[4].chainId;
+  const _destinationContract = multiPassContract.address; // has to be already deployed on the other chain
+
+  let feeNeeded = await multiPassContract.checkFees(dstChainId, _destinationContract, { from: walletFuji.address });
+
+  let broadcastedNftOwnership = await multiPassContract.broadcastNFTOwnership(dstChainId, _destinationContract, { value: feeNeeded, from: walletFuji.address })
+
+
+   console.log(
     `Broadcasted nftOwnership txhash:  ${broadcastedNftOwnership} `
 
   )
+
+
+  */
+
+
+
+
+
 
 
 

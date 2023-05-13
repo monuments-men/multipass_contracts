@@ -255,10 +255,6 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     ) external view returns (uint) {
         // Create an instance of the ERC721 contract
 
-        IERC721 omniTicket = IERC721(omniTicketContract);
-        // Check the balance of the msg.sender
-        uint256 balance = omniTicket.balanceOf(msg.sender);
-
         bytes memory payload = abi.encode(msg.sender, 1);
 
         uint16 version = 1;
@@ -322,5 +318,9 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
             // Emit the event
             emit NFTOwnershipBroadcasted(msg.sender, tokenId, block.timestamp);
         }
+    }
+
+    function toBytes(address a) public pure returns (bytes memory) {
+        return abi.encodePacked(a);
     }
 }
