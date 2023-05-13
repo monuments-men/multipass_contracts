@@ -7,7 +7,7 @@ async function main() {
 
   console.log(`Starting deployment V1`)
 
-
+  const gasLimit = ethers.utils.hexlify(9000000); // example limit
   const uri = "http://www.voodoofx.com/wp-content/uploads/2018/03/Multipass-LeeLoo.jpg";
   const chainIdsEndpointsLayerZero = [
     { chainName: "Arbitrum-Goerli", chainId: "10143", endpoint: "0x6aB5Ae6822647046626e83ee6dB8187151E1d5ab" },
@@ -46,7 +46,8 @@ async function main() {
   const multichainTicket = await MultichainTicket.deploy(uri);
   await multichainTicket.deployed();
 
-  const multiPassContract = await MultiPassContract.deploy(multichainTicket.address, chainIdsEndpointsLayerZero[2].endpoint);
+  console.log("nft ticket deployed")
+  const multiPassContract = await MultiPassContract.deploy(multichainTicket.address, chainIdsEndpointsLayerZero[2].endpoint, { gasLimit: gasLimit });
   await multiPassContract.deployed();
 
 
@@ -62,7 +63,7 @@ async function main() {
   const SmultichainTicket = await SMultichainTicket.deploy(uri);
   await SmultichainTicket.deployed();
 
-  const SmultiPassContract = await SMultiPassContract.deploy(SmultichainTicket.address, chainIdsEndpointsLayerZero[3].endpoint);
+  const SmultiPassContract = await SMultiPassContract.deploy(SmultichainTicket.address, chainIdsEndpointsLayerZero[3].endpoint, { gasLimit: gasLimit });
   await SmultiPassContract.deployed();
 
 
