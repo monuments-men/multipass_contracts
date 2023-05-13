@@ -17,7 +17,7 @@ async function main() {
     { chainName: "Fuji Testnet", chainId: "10106", endpoint: "0x93f54D755A063cE7bB9e6Ac47Eccc8e33411d706" },
     { chainName: "gnosis Testnet", chainId: "10145", endpoint: "0xae92d5aD7583AD66E49A0c67BAd18F6ba52dDDc1" },
     { chainName: "zkSync Testnet", chainId: "10165", endpoint: "0x093D2CF57f764f09C3c2Ac58a42A2601B8C79281" },
-
+    { chainName: "polygon mainnet", chainId: "109", endpoint: "0x3c2269811836af69497E5F486A85D7316753cf62" },
 
   ];
 
@@ -76,13 +76,13 @@ async function main() {
   const multichainTicket = await SMultichainTicket.deploy(uri);
   await multichainTicket.deployed();
 
-  const multiPassContract = await SMultiPassContract.deploy(SmultiPassContract.address, chainIdsEndpointsLayerZero[2].endpoint);
+  const multiPassContract = await SMultiPassContract.deploy(SmultiPassContract.address, chainIdsEndpointsLayerZero[7].endpoint);
   await multiPassContract.deployed();
 
 
 
 
-  console.log(`Deployed Contracts to Chain:  ${chainIdsEndpointsLayerZero[2].chainName}`)
+  console.log(`Deployed Contracts to Chain:  ${chainIdsEndpointsLayerZero[7].chainName}`)
   console.log(
     `Deployed multiPassContract to ${multiPassContract.address}`
   );
