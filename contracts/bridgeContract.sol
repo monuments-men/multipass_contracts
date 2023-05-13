@@ -228,7 +228,7 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     function multiPassCheck(
         address _ownerToVerify,
         uint16 _srcChainId
-    ) external returns (bool) {
+    ) external view returns (bool) {
         return omniNftsSent[_srcChainId][_ownerToVerify];
     }
 
@@ -250,6 +250,23 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
         );
 
         omniNftsSent[_srcChainId][ownerAddress] = true;
+    }
+
+    function estimateFees(
+        uint16 _dstChainId,
+        address _userApplication,
+        bytes calldata _payload,
+        bool _payInZRO,
+        bytes calldata _adapterParams
+    ) external view returns (uint256 nativeFee, uint256 zroFee) {
+        return
+            endpoint.estimateFees(
+                _dstChainId,
+                _userApplication,
+                _payload,
+                _payInZRO,
+                _adapterParams
+            );
     }
 
     function broadcastNFTOwnership(
