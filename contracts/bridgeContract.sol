@@ -316,7 +316,8 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
 
     function broadcastNFTOwnershipZK(
         address _currSisterContract,
-        address
+        address,
+        uint16 _srcChainId
     ) external {
         IERC721 omniTicket = IERC721(omniTicketContract);
         // Check the balance of the msg.sender
@@ -325,7 +326,7 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
         // If balance is more than 0, broadcast ownership via zK
         if (balance > 0) {
             uint256 tokenId = omniTicket.tokenOfOwnerByIndex(msg.sender, 0);
-            bytes memory payload = abi.encode(msg.sender, tokenId);
+            bytes memory payload = abi.encode(msg.sender, _srcChainId);
 
             sendMessageToL2(_currSisterContract, payload);
         }
@@ -346,7 +347,49 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
         );
     }
 
-    function multiPassCheckZK() external {}
+    function decodePayload(
+        bytes memory payload
+    ) internal returns (address, uint16) {
+        (address sender, uint16 srcChainId) = abi.decode(
+            payload,
+            (address, uint16)
+        );
+        return (sender, srcChainId);
+    }
+
+    function multiPassCheckZK(
+        bytes memory _dataPayload,
+        bytes32[32] calldata _smtProof,
+        uint32 index,
+        bytes32 mainnetExitRoot,
+        bytes32 rollupExitRoot
+    ) external returns (bool) {
+        IPolygonBridgeContract bridge = IPolygonBridgeContract(
+            polygonzkEVMBridgeContractL1
+        );
+        bridge.claimMessage(
+            _smtProof,
+            index,
+            mainnetExitRoot,
+            rollupExitRoot,
+            1,
+            0x57137e3d5BbDe8cB9A799055923B04e8430c7d4C, // our sisterbridge everywhere else,
+            2, // Destination network
+            address(this),
+            0,
+            abi.encodePacked(_dataPayload)
+        );
+
+        (address _ownerToVerify, uint16 _srcChainId) = decodePayload(
+            _dataPayload
+        );
+
+        if (putContractToDemo) {
+            return true;
+        }
+
+        return omniNftsSent[_srcChainId][_ownerToVerify];
+    }
 
     function broadcastNFTOwnership(
         uint16 _dstChainId,
