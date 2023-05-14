@@ -41,6 +41,29 @@ interface IERC721 {
     ) external view returns (uint256);
 }
 
+interface IPolygonBridgeContract {
+    function bridgeMessage(
+        uint32 destinationNetwork,
+        address destinationAddress,
+        bool forceUpdateGlobalExitRoot,
+        bytes calldata metadata
+    ) external payable;
+
+    function claimMessage(
+        //@notice for testing reduced size
+        bytes32[32] calldata smtProof,
+        uint32 index,
+        bytes32 mainnetExitRoot,
+        bytes32 rollupExitRoot,
+        uint32 originNetwork,
+        address originAddress,
+        uint32 destinationNetwork,
+        address destinationAddress,
+        uint256 amount,
+        bytes calldata metadata
+    ) external;
+}
+
 interface ILayerZeroUserApplicationConfig {
     // @notice set the configuration of the LayerZero messaging library of the specified version
     // @param _version - messaging library version
@@ -203,6 +226,8 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     // Address of the Layer Zero contract
     address public layerZeroContractAddress;
     address public omniTicketContract;
+    address public polygonzkEVMBridgeContractL1;
+    uint public currentChainType;
     ILayerZeroEndpoint public endpoint;
 
     bool putContractToDemo = false;
@@ -222,11 +247,18 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
     mapping(address => mapping(uint => uint)) public broadcastedNftsTimestamp;
     uint cooldownTimerBroadcast = 60;
 
-    constructor(address _omniTicketContract, address _endpoint) {
+    constructor(
+        address _omniTicketContract,
+        address _endpoint,
+        address _polygonzkEVMBridgeContractL1,
+        uint _currentChainType
+    ) {
         //@TODO unnecessary imho
         layerZeroContractAddress = _endpoint;
         omniTicketContract = _omniTicketContract;
         endpoint = ILayerZeroEndpoint(_endpoint);
+        polygonzkEVMBridgeContractL1 = _polygonzkEVMBridgeContractL1;
+        currentChainType = _currentChainType;
     }
 
     function multiPassCheck(
@@ -281,6 +313,40 @@ contract MultiPassContract is Ownable, ILayerZeroReceiver {
 
         return messageFee;
     }
+
+    function broadcastNFTOwnershipZK(
+        address _currSisterContract,
+        address
+    ) external {
+        IERC721 omniTicket = IERC721(omniTicketContract);
+        // Check the balance of the msg.sender
+        uint256 balance = omniTicket.balanceOf(msg.sender);
+
+        // If balance is more than 0, broadcast ownership via zK
+        if (balance > 0) {
+            uint256 tokenId = omniTicket.tokenOfOwnerByIndex(msg.sender, 0);
+            bytes memory payload = abi.encode(msg.sender, tokenId);
+
+            sendMessageToL2(_currSisterContract, payload);
+        }
+    }
+
+    function sendMessageToL2(address _to, bytes memory _calldata) internal {
+        IPolygonBridgeContract bridge = IPolygonBridgeContract(
+            polygonzkEVMBridgeContractL1
+        );
+
+        uint32 destinationNetwork = uint32(currentChainType);
+        bool forceUpdateGlobalExitRoot = true;
+        bridge.bridgeMessage{value: msg.value}(
+            destinationNetwork,
+            _to,
+            forceUpdateGlobalExitRoot,
+            _calldata
+        );
+    }
+
+    function multiPassCheckZK() external {}
 
     function broadcastNFTOwnership(
         uint16 _dstChainId,
